@@ -15,9 +15,9 @@ class Model {
   }
 
   editTodo(id, updatedText) {
-    this.todoList = this.todoList.map(todo => {
+    this.todoList = this.todoList.map(todo =>
       todo.id === id ? { id: todo.id, text: updatedText, complete: todo.complete } : todo
-    })
+    )
 
     this.onTodoListChanged(this.todoList)
   }
@@ -108,7 +108,6 @@ class View {
       checkBox.checked = todo.complete
 
       const issueName = this.createElement('span', 'todo-item__name')
-      issueName.contentEditable = true
 
       if (todo.complete) {
         const striker = this.createElement('s')
@@ -116,6 +115,7 @@ class View {
         issueName.appendChild(striker)
       } else {
         issueName.innerText = todo.text
+        issueName.contentEditable = true
       }
 
       const issueDelBtn = this.createElement('button', 'todo-item__button')
@@ -133,6 +133,8 @@ class View {
     this.headerAddBtn.addEventListener('click', controller.handleAddTodo)
     this.todoList.addEventListener('click', controller.handleDelTodo)
     this.todoList.addEventListener('change', controller.handleToggle)
+    this.todoList.addEventListener('input', controller.handleEditTodo)
+    this.todoList.addEventListener('focusout', controller.handleEditTodoComplete)
   }
 
 }
@@ -141,6 +143,8 @@ class Controller {
   constructor(model, view) {
     this.model = model
     this.view = view
+
+    this.temporaryEditValue = ''
 
     this.model.bindEvents(this)
     this.view.bindEvents(this)
@@ -180,6 +184,22 @@ class Controller {
     if (event.target.type === 'checkbox') {
       const id = parseInt(event.target.parentElement.id)
       this.model.toggleTodo(id)
+    }
+  }
+
+  handleEditTodo = event => {
+    if (event.target.className === 'todo-item__name') {
+      this.temporaryEditValue = event.target.innerText
+    }
+  }
+
+  handleEditTodoComplete = event => {
+    if (this.temporaryEditValue) {
+      const id = parseInt(event.target.parentElement.id)
+      console.log(id)
+
+      this.model.editTodo(id, this.temporaryEditValue)
+      this.temporaryEditValue = ''
     }
   }
 

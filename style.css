@@ -47,5 +47,10 @@
 
 .todo-item__name {
   flex-grow: 1;
-  padding-left: 20px;
+  margin:0 20px 0 20px;
+}
+
+.todo-item__name:focus {
+  outline: none;
+  border-bottom: 1px solid black;
 }
