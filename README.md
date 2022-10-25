@@ -1,6 +1,6 @@
 # MVC-todo-demo
 > Learn the MVC pattern
-## 为什么会诞生 Model-View-(C or P or VM)?Cancel changes
+## 为什么会诞生 Model-View-(C or P or VM)?
 
 最初这些架构的目的都是为了将带有图形界面的应用解构成各司其职的几块：视图，处理程序，数据管理。
 
