@@ -3,12 +3,19 @@ class Model {
   constructor() {
     this.todoList = [{
       id: 0,
-      text: 1,
+      text: "事件一",
       complete: false
     }]
   }
 
-  addTodo(todo) {
+  addTodo(todoText) {
+
+    const todo = {
+      id: this.todoList.length > 0 ? this.todoList[this.todoList.length - 1].id + 1 : 1,
+      text: todoText,
+      complete: false
+    }
+
     this.todoList = [...this.todoList, todo]
 
     this.onTodoListChanged(this.todoList)
@@ -36,9 +43,10 @@ class Model {
     this.onTodoListChanged(this.todoList)
   }
 
-  bindEvents(controller) {
-    this.onTodoListChanged = controller.onTodoListChanged
+  bindOnTodoListChanged(cb) {
+    this.onTodoListChanged = cb
   }
+
 }
 
 class View {
@@ -84,7 +92,7 @@ class View {
     return document.querySelector(selector)
   }
 
-  get todoText() {
+  get __todoText() {
     return this.headerInput.value
   }
 
@@ -108,6 +116,7 @@ class View {
       checkBox.checked = todo.complete
 
       const issueName = this.createElement('span', 'todo-item__name')
+      issueName.setAttribute('placeholder', '编辑内容不能为空哦~')
 
       if (todo.complete) {
         const striker = this.createElement('s')
@@ -129,12 +138,58 @@ class View {
     })
   }
 
-  bindEvents(controller) {
-    this.headerAddBtn.addEventListener('click', controller.handleAddTodo)
-    this.todoList.addEventListener('click', controller.handleDelTodo)
-    this.todoList.addEventListener('change', controller.handleToggle)
-    this.todoList.addEventListener('input', controller.handleEditTodo)
-    this.todoList.addEventListener('focusout', controller.handleEditTodoComplete)
+  bindHandleAddTodo(cb) {
+    this.headerAddBtn.addEventListener('click', (event) => {
+      event.preventDefault()
+
+      this.__todoText && cb(this.__todoText)
+
+      this.resetInput()
+    })
+  }
+
+  bindHandleDelTodo(cb) {
+    this.todoList.addEventListener('click', event => {
+      if (event.target.className === 'todo-item__button') {
+        const id = parseInt(event.target.parentElement.id)
+        cb(id)
+      }
+    })
+  }
+
+  bindHandleEditTodo(cb) {
+
+    this.todoList.addEventListener('focusin', event => {
+      if (event.target.className === 'todo-item__name') {
+        this.__stage = event.target.innerText
+      }
+    })
+
+    this.todoList.addEventListener('input', event => {
+      if (event.target.className === 'todo-item__name') {
+        this.temporaryEditValue = event.target.innerText
+      }
+    })
+
+    this.todoList.addEventListener('focusout', event => {
+      if (this.temporaryEditValue) {
+        const id = parseInt(event.target.parentElement.id)
+        cb(id, this.temporaryEditValue)
+        this.temporaryEditValue = ''
+        return
+      }
+      event.target.innerText = this.__stage
+    })
+
+  }
+
+  bindHandleToggle(cb) {
+    this.todoList.addEventListener('change', event => {
+      if (event.target.type === 'checkbox') {
+        const id = parseInt(event.target.parentElement.id)
+        cb(id)
+      }
+    })
   }
 
 }
@@ -144,63 +199,32 @@ class Controller {
     this.model = model
     this.view = view
 
-    this.temporaryEditValue = ''
-
-    this.model.bindEvents(this)
-    this.view.bindEvents(this)
-
     this.onTodoListChanged(this.model.todoList)
+    this.model.bindOnTodoListChanged(this.onTodoListChanged)
+    this.view.bindHandleAddTodo(this.handleAddTodo)
+    this.view.bindHandleDelTodo(this.handleDelTodo)
+    this.view.bindHandleEditTodo(this.handleEditTodo)
   }
 
-  onTodoListChanged = todos => {
+  onTodoListChanged = (todos) => {
     this.view.renderTodos(todos)
   }
 
-  handleAddTodo = event => {
-    event.preventDefault()
-
-    if (this.view.todoText) {
-      const todo = {
-        id: this.model.todoList.length > 0 ? this.model.todoList[this.model.todoList.length - 1].id + 1 : 1,
-        text: this.view.todoText,
-        complete: false
-      }
-
-      this.model.addTodo(todo)
-      this.view.resetInput()
-      return
-    }
-    alert("文字不能为空哦 ~")
+  // 理想模式下，这里只操作 model 层（避免 model 与 View 混写）
+  handleAddTodo = todoText => {
+    this.model.addTodo(todoText)
   }
 
-  handleDelTodo = event => {
-    if (event.target.className === 'todo-item__button') {
-      const id = parseInt(event.target.parentElement.id)
-      this.model.delTodo(id)
-    }
+  handleDelTodo = id => {
+    this.model.delTodo(id)
   }
 
-  handleToggle = event => {
-    if (event.target.type === 'checkbox') {
-      const id = parseInt(event.target.parentElement.id)
-      this.model.toggleTodo(id)
-    }
+  handleToggle = id => {
+    this.model.toggleTodo(id)
   }
 
-  handleEditTodo = event => {
-    if (event.target.className === 'todo-item__name') {
-      this.temporaryEditValue = event.target.innerText
-    }
-  }
-
-  handleEditTodoComplete = event => {
-    if (this.temporaryEditValue) {
-      const id = parseInt(event.target.parentElement.id)
-      console.log(id)
-
-      this.model.editTodo(id, this.temporaryEditValue)
-      this.temporaryEditValue = ''
-    }
+  handleEditTodo = (id, editValue) => {
+    this.model.editTodo(id, editValue)
   }
 
 }
