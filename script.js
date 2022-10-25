@@ -1,11 +1,7 @@
 // Model 只关心数据
 class Model {
   constructor() {
-    this.todoList = [{
-      id: 0,
-      text: "事件一",
-      complete: false
-    }]
+    this.todoList = JSON.parse(localStorage.getItem('MVC-todo-list') || '[]')
   }
 
   addTodo(todoText) {
@@ -17,6 +13,7 @@ class Model {
     }
 
     this.todoList = [...this.todoList, todo]
+    localStorage.setItem('MVC-todo-list', JSON.stringify(this.todoList))
 
     this.onTodoListChanged(this.todoList)
   }
@@ -25,12 +22,14 @@ class Model {
     this.todoList = this.todoList.map(todo =>
       todo.id === id ? { id: todo.id, text: updatedText, complete: todo.complete } : todo
     )
+    localStorage.setItem('MVC-todo-list', JSON.stringify(this.todoList))
 
     this.onTodoListChanged(this.todoList)
   }
 
   delTodo(id) {
     this.todoList = this.todoList.filter(todo => todo.id !== id)
+    localStorage.setItem('MVC-todo-list', JSON.stringify(this.todoList))
 
     this.onTodoListChanged(this.todoList)
   }
@@ -39,6 +38,7 @@ class Model {
     this.todoList = this.todoList.map(todo =>
       todo.id === id ? { id: todo.id, text: todo.text, complete: !todo.complete } : todo
     )
+    localStorage.setItem('MVC-todo-list', JSON.stringify(this.todoList))
 
     this.onTodoListChanged(this.todoList)
   }
